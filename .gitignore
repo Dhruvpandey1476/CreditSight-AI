@@ -1,0 +1,16 @@
+node_modules/
+venv/
+__pycache__/
+.ipynb_checkpoints/
+
+.env
+
+# data
+data/
+datasets/
+*.csv
+
+# models
+*.pkl
+*.pt
+*.h5
