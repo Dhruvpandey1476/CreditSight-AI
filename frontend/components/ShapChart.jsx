@@ -4,6 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   CartesianGrid, Cell, ResponsiveContainer,
 } from "recharts";
+import { AlertCircle } from "lucide-react";
 
 const FEATURE_LABELS = {
   upi_salary_regularity: "UPI Salary Regularity",
@@ -25,83 +26,74 @@ const FEATURE_LABELS = {
   income_growth_trend: "Income Growth",
 };
 
-const styles = `
-  .chart-card {
-    background: rgba(13,20,32,0.6);
-    border: 1px solid rgba(30,58,95,0.4);
-    border-radius: 16px; padding: 20px; margin-bottom: 24px;
-  }
-  .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #E8EDF5; }
-  .chart-subtitle { font-size: 11px; color: #4A6FA5; margin-bottom: 16px; }
-`;
-
 export default function ShapChart({ shapValues }) {
   if (!shapValues) return null;
 
-  // Filter out non-numeric values and convert to data format
   const data = Object.entries(shapValues)
-    .filter(([key, val]) => typeof val === 'number')  // Only keep numeric values
+    .filter(([key, val]) => typeof val === 'number')
     .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
     .slice(0, 8)
     .map(([key, val]) => ({
       name: FEATURE_LABELS[key] || key,
       value: typeof val === 'number' ? parseFloat(val.toFixed ? val.toFixed(3) : val) : 0,
-      color: val >= 0 ? "#00D4AA" : "#FF6B6B",
+      color: val >= 0 ? "var(--color-primary)" : "#FF6B6B",
     }));
 
-  // Show message if no numeric explainability values available
   if (data.length === 0) {
     return (
-      <>
-        <style>{styles}</style>
-        <div className="chart-card">
-          <div className="chart-title">Score Explainability (Feature Importance)</div>
-          <div className="chart-subtitle">
-            Feature importance shows how each input signal influenced the final score
-          </div>
-          <div style={{ color: "#7A9BC4", fontSize: 12, padding: "20px 0" }}>
-            Model analysis unavailable. Please check the pipeline logs.
-          </div>
+      <div className="bg-surface border border-border rounded-2xl p-6 md:p-8 mb-8">
+        <div className="text-lg font-semibold text-text mb-1">Score Explainability (Feature Importance)</div>
+        <div className="text-sm text-text-muted mb-6">
+          Feature importance shows how each input signal influenced the final score
         </div>
-      </>
+        <div className="flex items-center gap-2 text-sm text-text-muted py-6">
+          <AlertCircle size={16} /> Model analysis unavailable. Please check the pipeline logs.
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
-      <style>{styles}</style>
-      <div className="chart-card">
-        <div className="chart-title">Score Explainability (Feature Importance)</div>
-        <div className="chart-subtitle">
-          How each signal influenced the final score
-        </div>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} layout="vertical" margin={{ left: 20, right: 40 }}>
+    <div className="bg-surface border border-border rounded-2xl p-6 md:p-8 mb-8">
+      <div className="text-lg font-semibold text-text mb-1">Score Explainability (Feature Importance)</div>
+      <div className="text-sm text-text-muted mb-6">
+        How each signal influenced the final score
+      </div>
+      <div className="w-full h-[260px] -ml-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} layout="vertical" margin={{ left: 10, right: 20 }}>
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="rgba(30,58,95,0.2)"
+              stroke="var(--color-border)"
               horizontal={false}
             />
             <XAxis
               type="number"
-              tick={{ fill: "#4A6FA5", fontSize: 10 }}
+              tick={{ fill: "var(--color-text-muted)", fontSize: 11 }}
+              tickLine={false}
+              axisLine={{ stroke: "var(--color-border)" }}
             />
             <YAxis
               type="category"
               dataKey="name"
-              tick={{ fill: "#7A9BC4", fontSize: 10 }}
-              width={155}
+              tick={{ fill: "var(--color-text)", fontSize: 11, fontWeight: 500 }}
+              width={160}
+              tickLine={false}
+              axisLine={false}
             />
             <Tooltip
               contentStyle={{
-                background: "#0B1018",
-                border: "1px solid rgba(30,58,95,0.5)",
+                background: "var(--color-surface2)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "8px",
                 fontSize: 12,
-                color: "#E8EDF5",
+                color: "var(--color-text)",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
               }}
+              cursor={{ fill: "var(--color-border)", opacity: 0.4 }}
               formatter={(v) => [v > 0 ? `+${v}` : v, "SHAP Impact"]}
             />
-            <Bar dataKey="value" radius={[0, 3, 3, 0]}>
+            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
               {data.map((d, i) => (
                 <Cell key={i} fill={d.color} />
               ))}
@@ -109,6 +101,6 @@ export default function ShapChart({ shapValues }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </>
+    </div>
   );
 }

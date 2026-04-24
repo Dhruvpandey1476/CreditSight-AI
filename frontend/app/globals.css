@@ -1,39 +1,66 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode (High Contrast, Clean) */
+    --color-bg: #FFFFFF;
+    --color-surface: #F9FAFB;
+    --color-surface2: #F3F4F6;
+    --color-border: #E5E7EB;
+    
+    --color-primary: #111111;
+    --color-primary-light: #F3F4F6;
+    --color-primary-foreground: #FFFFFF;
+    
+    --color-text: #111111;
+    --color-text-muted: #6B7280;
+    --color-text-subtle: #9CA3AF;
+  }
+
+  .dark {
+    /* Dark Mode - Soft Charcoal / Slate */
+    --color-bg: #09090b;
+    --color-surface: #18181b;
+    --color-surface2: #27272a;
+    --color-border: #3f3f46;
+    
+    --color-primary: #FFFFFF;
+    --color-primary-light: #1A1A1A;
+    --color-primary-foreground: #000000;
+    
+    --color-text: #EDEDED;
+    --color-text-muted: #888888;
+    --color-text-subtle: #555555;
+  }
 }
 
-:root {
-  --font-space-grotesk: 'Space Grotesk', system-ui, sans-serif;
-  --color-bg: #080C14;
-  --color-surface: #0B1018;
-  --color-surface2: #0D1420;
-  --color-border: rgba(30, 58, 95, 0.4);
-  --color-teal: #00D4AA;
-  --color-blue: #0066FF;
-  --color-amber: #FFB347;
-  --color-red: #FF6B6B;
-  --color-text: #E8EDF5;
-  --color-muted: #4A6FA5;
-  --color-subtle: #2A4A6F;
-}
-
-html,
-body {
-  background: var(--color-bg);
+html, body {
+  background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-space-grotesk), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   min-height: 100vh;
+}
+
+::selection {
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+
+html, body, div, p, span, h1, h2, h3, h4, h5, h6, aside, nav, header, main, section, article {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 500ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 ::-webkit-scrollbar {
   width: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: #0D1420;
+  background-color: var(--color-surface2);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E3A5F;
+  background-color: var(--color-border);
   border-radius: 2px;
 }

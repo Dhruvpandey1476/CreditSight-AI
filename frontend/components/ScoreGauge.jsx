@@ -3,130 +3,11 @@
 import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
 
 const TIER_CONFIG = {
-  A: { color: "#00D4AA", bg: "rgba(0,212,170,0.12)", label: "Excellent" },
-  B: { color: "#4ECDC4", bg: "rgba(78,205,196,0.12)", label: "Good" },
-  C: { color: "#FFB347", bg: "rgba(255,179,71,0.12)", label: "Fair" },
-  D: { color: "#FF6B6B", bg: "rgba(255,107,107,0.12)", label: "Poor" },
+  A: { color: "#FFFFFF", bg: "rgba(255,255,255,0.05)", label: "Excellent" },
+  B: { color: "#E5E5E5", bg: "rgba(255,255,255,0.03)", label: "Good" },
+  C: { color: "#A3A3A3", bg: "rgba(163,163,163,0.05)", label: "Fair" },
+  D: { color: "#737373", bg: "rgba(115,115,115,0.05)", label: "Poor" },
 };
-
-const styles = `
-  .gauge-container {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    padding: 24px;
-    background: rgba(13,20,32,0.6);
-    border: 1px solid rgba(30,58,95,0.4);
-    border-radius: 16px;
-  }
-
-  .main-score-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .radial-gauge-wrapper {
-    width: 160px;
-    height: 100px;
-    position: relative;
-  }
-
-  .gauge-center-text {
-    position: absolute;
-    bottom: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-  }
-
-  .gauge-number {
-    font-size: 64px;
-    font-weight: 700;
-    line-height: 1;
-    font-family: monospace;
-  }
-
-  .gauge-label {
-    font-size: 11px;
-    color: #4A6FA5;
-    margin-top: 4px;
-  }
-
-  .tier-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 700;
-    border: 1px solid;
-  }
-
-  .supporting-scores-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-
-  .score-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 16px 12px;
-    background: rgba(30,58,95,0.2);
-    border: 1px solid rgba(30,58,95,0.3);
-    border-radius: 12px;
-  }
-
-  .score-card-label {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #4A6FA5;
-  }
-
-  .score-card-value {
-    font-size: 36px;
-    font-weight: 700;
-    font-family: monospace;
-  }
-
-  .score-card-sub {
-    font-size: 9px;
-    color: #4A6FA5;
-    margin-top: 2px;
-  }
-
-  .weight-badge {
-    font-size: 9px;
-    padding: 2px 6px;
-    border-radius: 3px;
-    background: rgba(30,58,95,0.5);
-    color: #7A9BC4;
-    font-weight: 500;
-    margin-top: 4px;
-  }
-
-  @media (max-width: 900px) {
-    .gauge-container {
-      padding: 16px;
-      gap: 16px;
-    }
-
-    .supporting-scores-row {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .score-card-value {
-      font-size: 28px;
-    }
-  }
-`;
 
 export default function ScoreGauge({
   score,
@@ -136,114 +17,19 @@ export default function ScoreGauge({
   score_breakdown,
 }) {
   const cfg = TIER_CONFIG[tier] || TIER_CONFIG.C;
-
-  // If we have all three scores, show the 3-score breakdown
+  
   if (ml_score !== undefined && agent_composite_score !== undefined) {
     return (
-      <>
-        <style>{styles}</style>
-        <div className="gauge-container">
-          {/* MAIN: Hybrid Score as focal point */}
-          <div className="main-score-section">
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#4A6FA5", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: 12 }}>
-                Final Credit Score
-              </div>
-            </div>
-
-            <div className="radial-gauge-wrapper">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadialBarChart
-                  cx="50%"
-                  cy="100%"
-                  innerRadius="70%"
-                  outerRadius="100%"
-                  startAngle={180}
-                  endAngle={0}
-                  data={[
-                    { value: 100, fill: "rgba(30,58,95,0.3)" },
-                    {
-                      value: ((score - 300) / 600) * 100,
-                      fill: cfg.color,
-                    },
-                  ]}
-                >
-                  <RadialBar
-                    dataKey="value"
-                    cornerRadius={4}
-                    background={false}
-                  />
-                </RadialBarChart>
-              </ResponsiveContainer>
-              <div className="gauge-center-text">
-                <div className="gauge-number" style={{ color: cfg.color, fontSize: 56 }}>
-                  {score}
-                </div>
-                <div className="gauge-label">/ 900</div>
-              </div>
-            </div>
-
-            <div
-              className="tier-badge"
-              style={{
-                background: cfg.bg,
-                color: cfg.color,
-                borderColor: cfg.color + "40",
-              }}
-            >
-              <span style={{ fontSize: 13 }}>◆</span> Tier {tier} — {cfg.label}
+      <div className="flex flex-col gap-6 p-6 md:p-8 bg-surface border border-border rounded-2xl">
+        {/* MAIN: Hybrid Score as focal point */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="text-center">
+            <div className="text-xs font-semibold text-text-muted tracking-wider uppercase mb-3">
+              Final Credit Score
             </div>
           </div>
 
-          {/* SUPPORTING: ML & Agent Scores */}
-          <div className="supporting-scores-row">
-            {/* ML Score Card */}
-            <div className="score-card" style={{ borderColor: "rgba(0,212,170,0.3)" }}>
-              <div className="score-card-label" style={{ color: "#00D4AA" }}>ML Score</div>
-              <div className="score-card-value" style={{ color: "#00D4AA" }}>
-                {ml_score}
-              </div>
-              <div className="score-card-sub">XGBoost</div>
-              <div className="weight-badge" style={{ background: "rgba(0,212,170,0.1)", color: "#00D4AA", borderColor: "rgba(0,212,170,0.2)", border: "1px solid" }}>
-                60% weight
-              </div>
-            </div>
-
-            {/* Agent Score Card */}
-            <div className="score-card" style={{ borderColor: "rgba(78,205,196,0.3)" }}>
-              <div className="score-card-label" style={{ color: "#4ECDC4" }}>Agent Score</div>
-              <div className="score-card-value" style={{ color: "#4ECDC4" }}>
-                {agent_composite_score}
-              </div>
-              <div className="score-card-sub">LLM Agents</div>
-              <div className="weight-badge" style={{ background: "rgba(78,205,196,0.1)", color: "#4ECDC4", borderColor: "rgba(78,205,196,0.2)", border: "1px solid" }}>
-                40% weight
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Fallback to single score display if individual scores not provided
-  const data = [
-    { value: 100, fill: "rgba(30,58,95,0.3)" },
-    { value: ((score - 300) / 600) * 100, fill: cfg.color },
-  ];
-
-  return (
-    <>
-      <style>{styles}</style>
-      <div className="gauge-container">
-        <div className="main-score-section">
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "#4A6FA5", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: 12 }}>
-              Credit Score
-            </div>
-          </div>
-
-          <div className="radial-gauge-wrapper">
+          <div className="relative w-40 h-28">
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart
                 cx="50%"
@@ -252,31 +38,129 @@ export default function ScoreGauge({
                 outerRadius="100%"
                 startAngle={180}
                 endAngle={0}
-                data={data}
+                data={[
+                  { value: 100, fill: "var(--color-border)" },
+                  {
+                    value: ((score - 300) / 600) * 100,
+                    fill: "url(#scoreGradient)",
+                  },
+                ]}
               >
-                <RadialBar dataKey="value" cornerRadius={4} background={false} />
+                <defs>
+                  <linearGradient id="scoreGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#0ea5e9" />
+                    <stop offset="100%" stopColor="#10b981" />
+                  </linearGradient>
+                </defs>
+                <RadialBar
+                  dataKey="value"
+                  cornerRadius={4}
+                  background={false}
+                />
               </RadialBarChart>
             </ResponsiveContainer>
-            <div className="gauge-center-text">
-              <div className="gauge-number" style={{ color: cfg.color }}>
+            <div className="absolute bottom-[60px] left-1/2 -translate-x-1/2 text-center">
+              <div className="text-6xl font-bold font-mono leading-none text-slate-800 dark:text-slate-100">
                 {score}
               </div>
-              <div className="gauge-label">/ 900</div>
+              <div className="text-xs text-text-muted mt-1.5">/ 900</div>
             </div>
           </div>
 
           <div
-            className="tier-badge"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border"
             style={{
               background: cfg.bg,
               color: cfg.color,
-              borderColor: cfg.color + "40",
+              borderColor: `${cfg.color}40`,
             }}
           >
-            <span style={{ fontSize: 13 }}>◆</span> Tier {tier} — {cfg.label}
+            <span className="text-sm">◆</span> Tier {tier} — {cfg.label}
+          </div>
+        </div>
+
+        {/* SUPPORTING: ML & Agent Scores */}
+        <div className="flex flex-col gap-3 mt-4">
+          {/* ML Score Card */}
+          <div className="flex justify-between items-center px-4 py-3 bg-surface2 border border-sky-500/30 rounded-xl hover:scale-[1.02] hover:shadow-md transition-all cursor-default">
+            <div className="flex flex-col">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">ML Score</div>
+              <div className="text-[10px] text-text-subtle mt-0.5">XGBoost (60%)</div>
+            </div>
+            <div className="text-2xl font-bold font-mono text-text">
+              {ml_score}
+            </div>
+          </div>
+
+          {/* Agent Score Card */}
+          <div className="flex justify-between items-center px-4 py-3 bg-surface2 border border-emerald-500/30 rounded-xl hover:scale-[1.02] hover:shadow-md transition-all cursor-default">
+            <div className="flex flex-col">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">Agent Score</div>
+              <div className="text-[10px] text-text-subtle mt-0.5">LLM Agents (40%)</div>
+            </div>
+            <div className="text-2xl font-bold font-mono text-text">
+              {agent_composite_score}
+            </div>
           </div>
         </div>
       </div>
-    </>
+    );
+  }
+
+  // Fallback to single score display if individual scores not provided
+  const data = [
+    { value: 100, fill: "var(--color-border)" },
+    { value: ((score - 300) / 600) * 100, fill: "url(#scoreGradientFallback)" },
+  ];
+
+  return (
+    <div className="flex flex-col gap-6 p-6 md:p-8 bg-surface border border-border rounded-2xl">
+      <div className="flex flex-col items-center gap-4">
+        <div className="text-center">
+          <div className="text-xs font-semibold text-text-muted tracking-wider uppercase mb-3">
+            Credit Score
+          </div>
+        </div>
+
+        <div className="relative w-40 h-28">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadialBarChart
+              cx="50%"
+              cy="100%"
+              innerRadius="70%"
+              outerRadius="100%"
+              startAngle={180}
+              endAngle={0}
+              data={data}
+            >
+              <defs>
+                <linearGradient id="scoreGradientFallback" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#0ea5e9" />
+                  <stop offset="100%" stopColor="#10b981" />
+                </linearGradient>
+              </defs>
+              <RadialBar dataKey="value" cornerRadius={4} background={false} />
+            </RadialBarChart>
+          </ResponsiveContainer>
+          <div className="absolute bottom-[60px] left-1/2 -translate-x-1/2 text-center">
+            <div className="text-6xl font-bold font-mono leading-none text-slate-800 dark:text-slate-100">
+              {score}
+            </div>
+            <div className="text-xs text-text-muted mt-1.5">/ 900</div>
+          </div>
+        </div>
+
+        <div
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border"
+          style={{
+            background: cfg.bg,
+            color: cfg.color,
+            borderColor: `${cfg.color}40`,
+          }}
+        >
+          <span className="text-sm">◆</span> Tier {tier} — {cfg.label}
+        </div>
+      </div>
+    </div>
   );
 }

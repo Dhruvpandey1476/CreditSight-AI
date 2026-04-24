@@ -261,10 +261,114 @@ class BulkRequest(BaseModel):
     profiles: List[BorrowerProfile] = Field(..., max_length=20)
     
 def xgboost_only_score(profile: dict) -> dict:
-    # Same XGBoost + SHAP logic as xgboost_scorer_node
-    # but takes profile dict directly, no state needed
-    # Returns: final_score, credit_tier, shap_values, recommendation
-    # No LLM calls at all
+    """
+    ML-only scoring using XGBoost + SHAP.
+    No LLM calls — used for bulk CSV scoring to avoid rate limits.
+    """
+    import os, json, pickle
+    import xgboost as xgb
+    
+    MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
+
+    model = xgb.XGBRegressor()
+    model.load_model(os.path.join(MODEL_DIR, "xgb_credit_model.json"))
+
+    with open(os.path.join(MODEL_DIR, "encoders.pkl"), "rb") as f:
+        encoders = pickle.load(f)
+    with open(os.path.join(MODEL_DIR, "features.json")) as f:
+        feature_cols = json.load(f)
+
+    p = profile
+    
+    # Helper function to safely convert to float
+    def to_float(val, default=0.5):
+        try:
+            if isinstance(val, str):
+                val = val.strip().lower()
+                # Map text values to floats
+                if val in ['high', 'yes', 'true']: return 0.8
+                if val in ['medium', 'medium_range']: return 0.5
+                if val in ['low', 'no', 'false']: return 0.2
+            return float(val)
+        except:
+            return default
+    
+    # Helper function to safely convert to int
+    def to_int(val, default=0):
+        try:
+            if isinstance(val, str):
+                # Count pipes if it's a delimited string (e.g., "electricity|wifi")
+                if '|' in val:
+                    return len(val.split('|'))
+                val = val.strip()
+            return int(float(val))
+        except:
+            return default
+    
+    # Helper function to map categorical values
+    def map_employment_type(val):
+        val = str(val).strip().lower()
+        if 'salaried' in val or 'formal' in val: return 'formal'
+        if 'freelancer' in val or 'self' in val: return 'self_employed'
+        if 'business' in val: return 'self_employed'
+        if 'gig' in val: return 'gig'
+        return 'gig'  # default
+    
+    def map_device_type(val):
+        val = str(val).strip().lower()
+        if 'premium' in val or 'ios' in val: return 'premium'
+        if 'mid' in val or 'android_mid' in val: return 'mid_range'
+        if 'budget' in val or 'low' in val or 'android_low' in val: return 'budget'
+        return 'mid_range'  # default
+    
+    row = {
+        "upi_monthly_txn_count":    to_int(p.get("upi_monthly_txn_count", 20), 20),
+        "upi_avg_monthly_inflow":   to_float(p.get("upi_avg_monthly_inflow", 15000), 15000),
+        "upi_avg_monthly_outflow":  to_float(p.get("upi_avg_monthly_outflow", 12000), 12000),
+        "upi_merchant_diversity":   to_float(p.get("upi_merchant_diversity", 0.5), 0.5),
+        "upi_salary_regularity":    to_float(p.get("upi_salary_regularity", 0.5), 0.5),
+        "upi_savings_ratio":        to_float(p.get("upi_savings_ratio", 0.2), 0.2),
+        "upi_large_txn_flag":       to_int(p.get("upi_large_txn_flag", 0), 0),
+        "monthly_income_est":       to_float(p.get("monthly_income_est", 15000), 15000),
+        "income_stability_score":   to_float(p.get("income_stability_score", 0.5), 0.5),
+        "job_tenure_months":        to_int(p.get("job_tenure_months", 12), 12),
+        "has_employer_epf":         to_int(p.get("has_employer_epf", 0), 0),
+        "income_growth_trend":      to_float(p.get("income_growth_trend", 0.01), 0.01),
+        "rent_payment_on_time_rate": to_float(p.get("rent_payment_on_time_rate", 0.7), 0.7),
+        "utility_on_time_rate":     to_float(p.get("utility_on_time_rate", 0.7), 0.7),
+        "rental_tenure_months":     to_int(p.get("rental_tenure_months", 12), 12),
+        "has_rental_agreement":     to_int(p.get("has_rental_agreement", 0), 0),
+        "bill_types_paid":          to_int(p.get("bill_types_paid", 2), 2),
+        "location_stability_score": to_float(p.get("location_stability_score", 0.5), 0.5),
+        "app_usage_tier":           to_float(p.get("app_usage_tier", 0.5), 0.5),
+        "sim_tenure_months":        to_int(p.get("sim_tenure_months", 24), 24),
+        "night_txn_ratio":          to_float(p.get("night_txn_ratio", 0.3), 0.3),
+        "employment_type_enc":      encoders["employment_type"].transform([map_employment_type(p.get("employment_type", "gig"))])[0],
+        "device_type_enc":          encoders["device_type"].transform([map_device_type(p.get("device_type", "budget"))])[0],
+    }
+
+    df = pd.DataFrame([row])[feature_cols]
+    raw_score = float(model.predict(df)[0])
+    score = int(max(300, min(900, raw_score)))
+    tier = "A" if score >= 750 else "B" if score >= 650 else "C" if score >= 550 else "D"
+    
+    # Load feature importance for explainability
+    try:
+        with open(os.path.join(MODEL_DIR, "feature_importance.json")) as f:
+            importance_dict = json.load(f)
+        
+        total_importance = sum(importance_dict.values())
+        shap_dict = {}
+        
+        if total_importance > 0:
+            for feat, imp_val in importance_dict.items():
+                normalized = (imp_val / total_importance) * 10
+                shap_dict[feat] = round(normalized, 4)
+    except Exception as e:
+        shap_dict = {}
+    
+    # Sort by absolute impact, top 10
+    top_shap = dict(sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)[:10]) if shap_dict else {}
     
     tier_recommendations = {
         "A": "Approve — low risk",
@@ -272,7 +376,7 @@ def xgboost_only_score(profile: dict) -> dict:
         "C": "Approve with conditions",
         "D": "Decline or secured loan only"
     }
-    ...
+    
     return {
         "final_score": score,
         "credit_tier": tier,
@@ -326,40 +430,118 @@ async def score_csv(file: UploadFile):
             "night_txn_ratio": 0.2,
         }
         
+        # Define data types for type conversion
+        TYPE_MAP = {
+            # Strings
+            "borrower_name": str,
+            "employment_type": str,
+            "device_type": str,
+            # Integers
+            "upi_monthly_txn_count": int,
+            "upi_large_txn_flag": int,
+            "job_tenure_months": int,
+            "has_employer_epf": int,
+            "rental_tenure_months": int,
+            "has_rental_agreement": int,
+            "bill_types_paid": int,
+            "sim_tenure_months": int,
+            # Floats
+            "upi_avg_monthly_inflow": float,
+            "upi_avg_monthly_outflow": float,
+            "upi_merchant_diversity": float,
+            "upi_salary_regularity": float,
+            "upi_savings_ratio": float,
+            "monthly_income_est": float,
+            "income_stability_score": float,
+            "income_growth_trend": float,
+            "rent_payment_on_time_rate": float,
+            "utility_on_time_rate": float,
+            "location_stability_score": float,
+            "app_usage_tier": float,
+            "night_txn_ratio": float,
+        }
+        
         # Fill missing columns with defaults
         for col, default_val in DEFAULTS.items():
             if col not in df.columns:
                 df[col] = default_val
                 print(f"  ℹ Added missing column '{col}' with default value")
         
+        # Convert columns to proper types
+        for col, col_type in TYPE_MAP.items():
+            if col in df.columns:
+                try:
+                    if col == "bill_types_paid":
+                        # Count pipe-delimited items (e.g., "electricity|wifi" = 2)
+                        df[col] = df[col].apply(lambda x: len(str(x).split('|')) if isinstance(x, str) and '|' in str(x) else int(float(x)))
+                    elif col == "app_usage_tier":
+                        # Map text values to floats
+                        def map_app_tier(val):
+                            val_str = str(val).lower().strip()
+                            if val_str in ['high', 'yes']: return 0.8
+                            if val_str in ['medium', 'medium_range']: return 0.5
+                            if val_str in ['low', 'no']: return 0.2
+                            try: return float(val)
+                            except: return 0.5
+                        df[col] = df[col].apply(map_app_tier)
+                    elif col == "employment_type":
+                        # Map to expected categories
+                        def map_employment(val):
+                            val_str = str(val).lower()
+                            if 'salaried' in val_str or 'formal' in val_str: return 'formal'
+                            if 'freelancer' in val_str: return 'freelance'
+                            if 'business' in val_str: return 'self_employed'
+                            if 'gig' in val_str: return 'gig'
+                            return 'gig'
+                        df[col] = df[col].apply(map_employment)
+                    elif col == "device_type":
+                        # Map to expected categories
+                        def map_device(val):
+                            val_str = str(val).lower()
+                            if 'premium' in val_str or 'ios' in val_str: return 'premium'
+                            if 'mid' in val_str: return 'mid_range'
+                            if 'budget' in val_str or 'low' in val_str: return 'budget'
+                            return 'mid_range'
+                        df[col] = df[col].apply(map_device)
+                    else:
+                        df[col] = df[col].astype(col_type)
+                except Exception as e:
+                    print(f"  ⚠ Could not convert '{col}': {str(e)[:80]}")
+                    df[col] = DEFAULTS.get(col, default_val)
+        
         # Convert to dict records
         profiles = df[list(DEFAULTS.keys())].to_dict("records")
-        print(f"🚀 Scoring {len(profiles)} profiles...")
+        print(f"🚀 Scoring {len(profiles)} profiles (ML-only mode, no LLM calls)...")
         
-        # Score all profiles
-        results = await asyncio.gather(
-            *[run_credit_pipeline(p) for p in profiles],
-            return_exceptions=True
-        )
+        # Score all profiles using ML-only (no LLM calls to avoid rate limits)
+        results = []
+        for i, p in enumerate(profiles):
+            try:
+                result = xgboost_only_score(p)
+                results.append(result)
+            except Exception as e:
+                print(f"❌ Profile {i} error: {str(e)[:100]}")
+                results.append({
+                    "final_score": 500,
+                    "credit_tier": "C",
+                    "shap_values": {},
+                    "lender_recommendation": "Unable to score",
+                    "scoring_mode": "ml_only"
+                })
         
-        # Check for errors in results
-        errors = [r for r in results if isinstance(r, Exception)]
-        if errors:
-            print(f"❌ {len(errors)} profiles failed to score")
-            for i, err in enumerate(errors):
-                print(f"   Profile {i}: {str(err)[:100]}")
-        
-        valid_results = [r for r in results if not isinstance(r, Exception)]
-        print(f"✅ Successfully scored {len(valid_results)} profiles")
+        print(f"✅ Successfully scored {len([r for r in results if r is not None])} profiles")
         
         # Add scored columns to original dataframe
-        df["final_score"] = [r.get("final_score", 0) if not isinstance(r, Exception) else 0 for r in results]
-        df["credit_tier"] = [r.get("credit_tier", "D") if not isinstance(r, Exception) else "D" for r in results]
-        df["ml_score"] = [r.get("ml_score", 0) if not isinstance(r, Exception) else 0 for r in results]
-        df["agent_composite"] = [r.get("agent_composite_score", 0) if not isinstance(r, Exception) else 0 for r in results]
+        df["final_score"] = [r.get("final_score", 500) for r in results]
+        df["credit_tier"] = [r.get("credit_tier", "C") for r in results]
+        df["lender_recommendation"] = [r.get("lender_recommendation", "Unable to score") for r in results]
+        
+        # Select only relevant columns for output
+        output_cols = ["borrower_name", "final_score", "credit_tier", "lender_recommendation"]
+        output_df = df[output_cols].copy()
         
         # Return as CSV string
-        csv_string = df.to_csv(index=False)
+        csv_string = output_df.to_csv(index=False)
         print(f"📤 CSV response ready ({len(csv_string)} bytes)")
         
         return StreamingResponse(
