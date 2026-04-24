@@ -7,10 +7,11 @@ import os, json, time, uuid, asyncio
 from datetime import datetime
 from typing import Optional
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi import FastAPI, HTTPException, UploadFile, Depends, status
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel,Field
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel, Field
 from typing import List
 import aiosqlite
 import pandas as pd
@@ -24,6 +25,7 @@ from fastapi.responses import StreamingResponse, FileResponse
 load_dotenv()
 
 from agents.orchestrator import run_credit_pipeline
+from auth import verify_password, get_password_hash, create_access_token, decode_access_token
 
 app = FastAPI(title="CreditSight API", version="1.0.0")
 
@@ -52,7 +54,35 @@ async def init_db():
                 result_json TEXT
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT
+            )
+        """)
         await db.commit()
+
+# ─────────────────────────── Auth Setup ──────────────────────────────────────
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+    username: str = payload.get("sub")
+    if username is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+    
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT id, username FROM users WHERE username = ?", (username,)) as cursor:
+            user = await cursor.fetchone()
+            if user is None:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+            return {"id": user[0], "username": user[1]}
 
 @app.on_event("startup")
 async def startup():
@@ -90,10 +120,57 @@ class BorrowerProfile(BaseModel):
     sim_tenure_months: int = 30
     night_txn_ratio: float = 0.2
 
+# ─────────────────────────── Auth Endpoints ──────────────────────────────────
+
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+
+@app.post("/api/auth/register")
+async def register(user: UserCreate):
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            async with db.execute("SELECT id FROM users WHERE username = ? OR email = ?", (user.username, user.email)) as cursor:
+                if await cursor.fetchone():
+                    raise HTTPException(status_code=400, detail="Username or email already registered")
+            
+            user_id = str(uuid.uuid4())
+            hashed_password = get_password_hash(user.password)
+            created_at = datetime.utcnow().isoformat()
+            
+            await db.execute(
+                "INSERT INTO users (id, username, email, password_hash, created_at) VALUES (?, ?, ?, ?, ?)",
+                (user_id, user.username, user.email, hashed_password, created_at)
+            )
+            await db.commit()
+        
+        return {"message": "User created successfully"}
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        raise HTTPException(status_code=400, detail=f"Error: {str(e)}\n{error_trace}")
+
+@app.post("/api/auth/login")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT password_hash, username FROM users WHERE username = ? OR email = ?", (form_data.username, form_data.username)) as cursor:
+            row = await cursor.fetchone()
+            if not row or not verify_password(form_data.password, row[0]):
+                raise HTTPException(status_code=400, detail="Incorrect username or password")
+    
+    access_token = create_access_token(data={"sub": row[1]})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/api/auth/me")
+async def read_users_me(current_user: dict = Depends(get_current_user)):
+    return current_user
+
+
 # ─────────────────────────── Score Endpoint ──────────────────────────────────
 
 @app.post("/api/score")
-async def score_borrower(profile: BorrowerProfile):
+async def score_borrower(profile: BorrowerProfile, current_user: dict = Depends(get_current_user)):
     start = time.time()
     profile_dict = profile.model_dump()
     borrower_name = profile_dict.pop("borrower_name", "Anonymous")
@@ -184,7 +261,7 @@ async def download_assessment_pdf(assessment_id: str):
 # ─────────────────────────── History Endpoint ────────────────────────────────
 
 @app.get("/api/history")
-async def get_history(limit: int = 10):
+async def get_history(limit: int = 10, current_user: dict = Depends(get_current_user)):
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute(
             "SELECT id, borrower_name, created_at, final_score, credit_tier, employment_type, monthly_income_est "
@@ -201,7 +278,7 @@ async def get_history(limit: int = 10):
     ]
 
 @app.get("/api/assessment/{assessment_id}")
-async def get_assessment(assessment_id: str):
+async def get_assessment(assessment_id: str, current_user: dict = Depends(get_current_user)):
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute(
             "SELECT result_json FROM assessments WHERE id=?", (assessment_id,)
@@ -423,7 +500,7 @@ def xgboost_only_score(profile: dict) -> dict:
     }    
 
 @app.post("/api/score/bulk")
-async def score_bulk(request: BulkRequest):
+async def score_bulk(request: BulkRequest, current_user: dict = Depends(get_current_user)):
     results = []
     for profile in request.profiles:
         # Skip LLM agents entirely — XGBoost + SHAP only
@@ -433,7 +510,7 @@ async def score_bulk(request: BulkRequest):
 
 
 @app.post("/api/score/csv-upload")
-async def score_csv(file: UploadFile):
+async def score_csv(file: UploadFile, current_user: dict = Depends(get_current_user)):
     try:
         print("📥 Reading CSV file...")
         df = pd.read_csv(file.file)

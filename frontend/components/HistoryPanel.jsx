@@ -14,7 +14,10 @@ export default function HistoryPanel() {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    fetch("/api/history?limit=20")
+    const token = localStorage.getItem("token");
+    fetch("/api/history?limit=20", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then((r) => r.json())
       .then(setHistory)
       .catch(() => {});

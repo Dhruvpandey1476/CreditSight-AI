@@ -39,8 +39,12 @@ export default function BulkPanel() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
+      const token = localStorage.getItem("token");
       const res = await fetch("/api/score/csv-upload", {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
         body: formData,
       });
 

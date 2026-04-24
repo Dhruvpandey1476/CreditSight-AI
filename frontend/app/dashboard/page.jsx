@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 import { 
   Moon, Sun, Zap, BarChart3, ClipboardList, Upload, CheckCircle2, 
   AlertTriangle, Building, Scale, CreditCard, Briefcase, 
-  Home as HomeIcon, Smartphone, LayoutGrid, Target, Database, Users, Settings, Menu, X, ChevronLeft, ChevronRight, Download, RotateCcw
+  Home as HomeIcon, Smartphone, LayoutGrid, Target, Database, Users, Settings, Menu, X, ChevronLeft, ChevronRight, Download, RotateCcw, LogOut
 } from "lucide-react";
 import ScoreGauge from "../../components/ScoreGauge";
 import AgentCard from "../../components/AgentCard";
@@ -52,6 +54,9 @@ const DEFAULT_PROFILE = {
 
 export default function Dashboard() {
   const { theme, setTheme } = useTheme();
+  const { user, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
+  
   const [mounted, setMounted] = useState(false);
   const [activeNav, setActiveNav] = useState("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -62,6 +67,12 @@ export default function Dashboard() {
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     setMounted(true);
@@ -92,9 +103,13 @@ export default function Dashboard() {
     setError(null);
     setResult(null);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch("/api/score", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` 
+        },
         body: JSON.stringify(profile),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -612,14 +627,24 @@ export default function Dashboard() {
                <span className={`transition-opacity ${!isSidebarOpen ? 'lg:opacity-0 lg:w-0' : 'opacity-100'}`}>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
              </button>
            )}
-           <div className="flex items-center gap-3 px-1 cursor-pointer group">
-             <div className="w-8 h-8 rounded-full bg-surface2 flex items-center justify-center text-xs font-semibold text-text border border-border shrink-0 group-hover:border-text-muted transition-colors">
-               N
+           <div className="flex items-center justify-between px-1 w-full group">
+             <div className="flex items-center gap-3">
+               <div className="w-8 h-8 rounded-full bg-surface2 flex items-center justify-center text-xs font-semibold text-text border border-border shrink-0 transition-colors uppercase">
+                 {user?.username ? user.username.charAt(0) : "N"}
+               </div>
+               <div className={`transition-opacity ${!isSidebarOpen ? 'lg:opacity-0' : 'opacity-100'}`}>
+                 <div className="text-xs font-medium text-text truncate max-w-[120px]">{user?.username || "User"}</div>
+                 <div className="text-[10px] text-text-subtle truncate max-w-[120px]">{user?.email || "NBFC Lender"}</div>
+               </div>
              </div>
-             <div className={`transition-opacity ${!isSidebarOpen ? 'lg:opacity-0' : 'opacity-100'}`}>
-               <div className="text-xs font-medium text-text">Admin User</div>
-               <div className="text-[10px] text-text-subtle">NBFC Lender</div>
-             </div>
+             
+             <button 
+               onClick={logout}
+               className={`text-text-muted hover:text-red-500 transition-colors p-1.5 rounded-md hover:bg-red-500/10 ${!isSidebarOpen ? 'lg:hidden' : 'opacity-0 group-hover:opacity-100'}`}
+               title="Log Out"
+             >
+               <LogOut size={16} />
+             </button>
            </div>
         </div>
       </aside>

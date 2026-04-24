@@ -4,10 +4,12 @@ import Link from "next/link";
 import { Moon, Sun, Search, User, LayoutDashboard, Rocket, Activity, Users, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -26,7 +28,7 @@ export default function LandingPage() {
       {/* Navbar */}
       <nav className="flex items-center justify-between px-6 md:px-12 py-6 relative z-50 animate-fade-in">
         {/* Logo Left */}
-        <div className="flex items-center gap-3 cursor-pointer w-48">
+        <div className="flex items-center gap-3 cursor-pointer lg:w-64 w-auto">
           <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm tracking-tighter shadow-sm">
             CS
           </div>
@@ -41,7 +43,7 @@ export default function LandingPage() {
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center justify-end gap-6 w-48">
+        <div className="flex items-center justify-end gap-4 md:gap-6 lg:w-64 w-auto">
           {mounted && (
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -52,10 +54,23 @@ export default function LandingPage() {
                <Sun size={16} className={`absolute transition-all duration-500 ${theme === "dark" ? "rotate-90 scale-50 opacity-0" : "rotate-0 scale-100 opacity-100"}`} />
             </button>
           )}
-          <span className="text-sm font-bold hover:text-text-muted cursor-pointer transition-colors hidden sm:block">Login</span>
-          <Link href="/dashboard" className="bg-surface text-text border border-border px-4 py-2 rounded-lg text-sm font-bold hover:bg-surface2 active:scale-95 transition-all shadow-sm">
-            Dashboard
-          </Link>
+          {mounted && user ? (
+            <>
+              <button onClick={logout} className="text-sm font-bold hover:text-text-muted cursor-pointer transition-colors hidden sm:block">Logout</button>
+              <Link href="/dashboard" className="bg-surface text-text border border-border px-4 py-2 rounded-lg text-sm font-bold hover:bg-surface2 active:scale-95 transition-all shadow-sm whitespace-nowrap">
+                Dashboard
+              </Link>
+            </>
+          ) : mounted ? (
+            <>
+              <Link href="/login" className="text-sm font-bold hover:text-text-muted cursor-pointer transition-colors hidden sm:block">Login</Link>
+              <Link href="/register" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-bold hover:scale-105 active:scale-95 transition-all shadow-md whitespace-nowrap">
+                Start Free Trial
+              </Link>
+            </>
+          ) : (
+            <div className="w-24"></div>
+          )}
         </div>
       </nav>
 
@@ -73,8 +88,8 @@ export default function LandingPage() {
         
         {/* Buttons */}
         <div className="opacity-0 animate-[fade-in-up_0.6s_ease-out_0.3s_forwards] flex flex-col sm:flex-row items-center gap-4 relative">
-          <Link href="/dashboard" className="px-6 py-3 rounded-lg bg-primary text-primary-foreground font-bold hover:scale-[1.02] active:scale-95 shadow-md transition-all w-full sm:w-auto min-w-[160px] text-center">
-            Create account
+          <Link href={user ? "/dashboard" : "/register"} className="px-6 py-3 rounded-lg bg-primary text-primary-foreground font-bold hover:scale-[1.02] active:scale-95 shadow-md transition-all w-full sm:w-auto min-w-[160px] text-center">
+            {user ? "Go to Dashboard" : "Create account"}
           </Link>
           <button className="px-6 py-3 rounded-lg bg-surface text-text font-bold hover:bg-surface2 hover:scale-[1.02] active:scale-95 transition-all border border-border shadow-sm w-full sm:w-auto min-w-[160px]">
             Book a call
