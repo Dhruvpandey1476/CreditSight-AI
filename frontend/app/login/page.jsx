@@ -5,32 +5,49 @@ import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, ArrowLeft } from "lucide-react";
+import Toast from "../../components/Toast";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  
+  // Toast state
+  const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
+  const showToast = (message, type) => setToast({ visible: true, message, type });
+  const hideToast = () => setToast(prev => ({ ...prev, visible: false }));
   const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError("");
+    hideToast();
 
     try {
       await login(username, password);
-      router.push("/dashboard");
+      setIsSuccess(true);
+      showToast("Login successful! Redirecting to dashboard...", "success");
+      
+      // Add a small delay so the user can see the success toast before unmounting
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
     } catch (err) {
-      setError(err.message || "Failed to login. Please try again.");
-    } finally {
+      showToast(err.message || "Failed to login. Please try again.", "error");
       setIsSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-6 relative">
+      <Toast 
+        visible={toast.visible} 
+        message={toast.message} 
+        type={toast.type} 
+        onClose={hideToast} 
+      />
       <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-sm text-[#888888] hover:text-white transition-colors">
         <ArrowLeft size={16} /> Back to Home
       </Link>
@@ -43,11 +60,6 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="p-3 bg-red/10 border border-red/30 rounded-lg text-sm text-red text-center">
-                {error}
-              </div>
-            )}
 
             <div>
               <label className="block text-xs font-semibold text-[#dddddd] mb-1.5" htmlFor="username">
@@ -81,11 +93,14 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSuccess}
               className="w-full bg-white text-black font-semibold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#eeeeee] active:scale-[0.98] transition-all disabled:opacity-70 mt-6"
             >
-              {isSubmitting ? (
-                <Loader2 size={18} className="animate-spin text-black" />
+              {isSubmitting || isSuccess ? (
+                <>
+                  <Loader2 size={18} className="animate-spin text-black" />
+                  {isSuccess ? "Redirecting..." : "Signing In..."}
+                </>
               ) : (
                 "Sign In"
               )}

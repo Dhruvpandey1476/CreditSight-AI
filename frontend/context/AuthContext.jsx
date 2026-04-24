@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
     if (userRes.ok) {
       const userData = await userRes.json();
       setUser(userData);
-      router.push("/dashboard");
+      // Let the calling component handle routing so it can show success states
     }
   };
 
