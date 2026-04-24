@@ -16,6 +16,8 @@ import aiosqlite
 import pandas as pd
 import io
 import traceback
+from utils.pdf_generator import generate_creditsight_pdf
+from fastapi.responses import StreamingResponse, FileResponse 
 
 
 # Load environment variables from .env file
@@ -143,6 +145,41 @@ async def score_borrower(profile: BorrowerProfile):
         await db.commit()
 
     return payload
+
+#----------------------------pdf generation endpoint----------------------------
+
+
+@app.get("/api/assessment/{assessment_id}/download")
+async def download_assessment_pdf(assessment_id: str):
+    # 1. Fetch the specific assessment from creditsight.db 
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT result_json, employment_type, monthly_income_est FROM assessments WHERE id=?", (assessment_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+    
+    if not row:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    
+    # 2. Parse the JSON data and inject DB columns
+    data = json.loads(row[0])
+    data['employment_type'] = row[1] if row[1] else "Not Provided"
+    data['monthly_income_est'] = row[2] if row[2] is not None else 0
+    
+    # 3. Define a temporary path for the PDF
+    temp_filename = f"report_{assessment_id}.pdf"
+    
+    # 4. Generate the PDF using the stored data
+    generate_creditsight_pdf(data, temp_filename)
+
+    # 5. Return the file as a download
+    # Note: In a production app, you'd use a BackgroundTask to delete the file after sending
+    return FileResponse(
+        path=temp_filename, 
+        filename=f"{data['borrower_name']}_CreditSight_Report.pdf",
+        media_type="application/pdf"
+    )
+
 
 # ─────────────────────────── History Endpoint ────────────────────────────────
 
