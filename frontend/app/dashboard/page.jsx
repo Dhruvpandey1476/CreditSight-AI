@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 import { 
   Moon, Sun, Zap, BarChart3, ClipboardList, Upload, CheckCircle2, 
   AlertTriangle, Building, Scale, CreditCard, Briefcase, 
@@ -52,6 +54,9 @@ const DEFAULT_PROFILE = {
 
 export default function Dashboard() {
   const { theme, setTheme } = useTheme();
+  const { user, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
+  
   const [mounted, setMounted] = useState(false);
   const [activeNav, setActiveNav] = useState("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -62,6 +67,12 @@ export default function Dashboard() {
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     setMounted(true);
@@ -92,9 +103,13 @@ export default function Dashboard() {
     setError(null);
     setResult(null);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch("/api/score", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` 
+        },
         body: JSON.stringify(profile),
       });
       if (!res.ok) throw new Error(await res.text());
