@@ -96,37 +96,39 @@ export default function BulkPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 h-full min-h-0">
       {/* Upload Section */}
-      <div
-        className={`bg-surface border border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all ${
-          dragover ? "border-primary bg-primary/5" : "border-border hover:border-text-muted hover:bg-surface2"
-        }`}
-        onClick={() => fileInputRef.current?.click()}
-        onDrop={handleDrop}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragover(true);
-        }}
-        onDragLeave={() => setDragover(false)}
-      >
-        <UploadCloud size={32} className="mx-auto mb-4 text-text-muted" />
-        <div className="text-sm font-semibold text-text mb-1">Click to upload or drag and drop</div>
-        <div className="text-[11px] text-text-subtle">CSV files only (Max 50MB)</div>
-        
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv"
-          className="hidden"
-          onChange={(e) => handleFileSelect(e.target.files?.[0])}
-        />
-        {selectedFile && (
-          <div className="text-sm text-text mt-6 p-3 bg-surface2 rounded-lg border border-border inline-flex items-center gap-2">
-            <CheckCircle2 size={16} /> {selectedFile.name}
-          </div>
-        )}
-      </div>
+      {!results && (
+        <div
+          className={`bg-surface border border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all ${
+            dragover ? "border-primary bg-primary/5" : "border-border hover:border-text-muted hover:bg-surface2"
+          }`}
+          onClick={() => fileInputRef.current?.click()}
+          onDrop={handleDrop}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragover(true);
+          }}
+          onDragLeave={() => setDragover(false)}
+        >
+          <UploadCloud size={32} className="mx-auto mb-4 text-text-muted" />
+          <div className="text-sm font-semibold text-text mb-1">Click to upload or drag and drop</div>
+          <div className="text-[11px] text-text-subtle">CSV files only (Max 50MB)</div>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={(e) => handleFileSelect(e.target.files?.[0])}
+          />
+          {selectedFile && (
+            <div className="text-sm text-text mt-6 p-3 bg-surface2 rounded-lg border border-border inline-flex items-center gap-2">
+              <CheckCircle2 size={16} /> {selectedFile.name}
+            </div>
+          )}
+        </div>
+      )}
 
       {selectedFile && !results && (
         <button
@@ -150,37 +152,48 @@ export default function BulkPanel() {
 
       {/* Results Section */}
       {results && !loading && (
-        <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
-            <div className="text-lg font-semibold text-text">Bulk Scoring Results</div>
-            <div className="flex gap-4">
-              <div className="px-4 py-2 rounded-lg text-sm font-medium bg-primary/10 text-primary flex items-center gap-2">
-                <CheckCircle2 size={16} /> {results.count} profiles scored
+        <div className="flex flex-col gap-6 h-full min-h-0 pb-6">
+          <div className="shrink-0 flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <div className="text-lg font-semibold text-text">Bulk Scoring Results</div>
+              <div className="flex gap-4">
+                <div className="px-4 py-2 rounded-lg text-sm font-medium bg-primary/10 text-primary flex items-center gap-2">
+                  <CheckCircle2 size={16} /> {results.count} profiles scored
+                </div>
               </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button className="flex-1 bg-surface2 text-text border border-border px-6 py-3 rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-surface2/80 flex items-center justify-center gap-2" onClick={downloadCsv}>
+                <Download size={16} /> Download Results as CSV
+              </button>
+
+              <button
+                className="flex-1 bg-surface2 text-text border border-border px-6 py-3 rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-surface2/80 flex items-center justify-center gap-2"
+                onClick={() => {
+                  setResults(null);
+                  setSelectedFile(null);
+                }}
+              >
+                <ChevronLeft size={16} /> Upload Another File
+              </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+          <div className="flex-1 overflow-y-auto custom-scrollbar rounded-xl border border-border bg-surface pr-2">
             <table className="w-full text-left border-collapse text-sm">
-              <thead className="bg-surface2 border-b border-border">
+              <thead className="bg-surface2 sticky top-0 z-10 shadow-sm">
                 <tr>
-                  <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide">Borrower Name</th>
-                  <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide">ML Score</th>
-                  <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide">Agent Score</th>
-                  <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide">Hybrid Score</th>
-                  <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide">Tier</th>
+                  <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide border-b border-border">Borrower Name</th>
+                  <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide border-b border-border">Score</th>
+                  <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide border-b border-border">Tier</th>
+                  <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide hidden md:table-cell border-b border-border">Recommendation</th>
                 </tr>
               </thead>
               <tbody>
                 {results.data.map((row, idx) => (
                   <tr key={idx} className="border-b border-border/50 hover:bg-surface2/50 transition-colors">
-                    <td className="p-4 text-text">{row.borrower_name || `Profile ${idx + 1}`}</td>
-                    <td className="p-4 font-mono font-semibold text-primary">
-                      {row.ml_score || "-"}
-                    </td>
-                    <td className="p-4 font-mono font-semibold text-[#4ecdc4]">
-                      {row.agent_composite_score || "-"}
-                    </td>
+                    <td className="p-4 text-text font-medium">{row.borrower_name || `Profile ${idx + 1}`}</td>
                     <td className="p-4 font-mono font-bold text-text">
                       {row.final_score || "-"}
                     </td>
@@ -189,25 +202,14 @@ export default function BulkPanel() {
                         {row.credit_tier || "N/A"}
                       </span>
                     </td>
+                    <td className="p-4 text-text-muted text-sm hidden md:table-cell max-w-xs truncate" title={row.lender_recommendation}>
+                      {row.lender_recommendation || "-"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          <button className="bg-surface2 text-text border border-border px-6 py-3 rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-surface2/80 flex items-center justify-center gap-2" onClick={downloadCsv}>
-            <Download size={16} /> Download Results as CSV
-          </button>
-
-          <button
-            className="w-full bg-surface2 text-text border border-border p-4 rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-surface2/80 flex items-center justify-center gap-2 mt-2"
-            onClick={() => {
-              setResults(null);
-              setSelectedFile(null);
-            }}
-          >
-            <ChevronLeft size={16} /> Upload Another File
-          </button>
         </div>
       )}
 

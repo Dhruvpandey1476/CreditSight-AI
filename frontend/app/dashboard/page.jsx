@@ -6,7 +6,7 @@ import Link from "next/link";
 import { 
   Moon, Sun, Zap, BarChart3, ClipboardList, Upload, CheckCircle2, 
   AlertTriangle, Building, Scale, CreditCard, Briefcase, 
-  Home as HomeIcon, Smartphone, LayoutGrid, Target, Database, Users, Settings, Menu, X, ChevronLeft, ChevronRight, Download
+  Home as HomeIcon, Smartphone, LayoutGrid, Target, Database, Users, Settings, Menu, X, ChevronLeft, ChevronRight, Download, RotateCcw
 } from "lucide-react";
 import ScoreGauge from "../../components/ScoreGauge";
 import AgentCard from "../../components/AgentCard";
@@ -418,22 +418,23 @@ export default function Dashboard() {
           <div className="absolute top-0 left-0 right-2 h-4 bg-gradient-to-b from-bg to-transparent z-20 pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 right-2 h-6 bg-gradient-to-t from-bg to-transparent z-20 pointer-events-none"></div>
 
+          {/* Placeholders */}
+          {!loading && !result && (
+            <div className="absolute inset-y-4 left-0 right-4 border border-dashed border-border rounded-2xl flex flex-col items-center justify-center text-text-muted z-10 pointer-events-none">
+              <Target size={40} className="mb-4 opacity-50" />
+              <div className="text-sm font-medium">Awaiting Assessment</div>
+              <div className="text-xs text-text-subtle mt-1">Select a profile and run analysis.</div>
+            </div>
+          )}
+
+          {loading && (
+            <div className="absolute inset-y-4 left-0 right-4 border border-border rounded-2xl flex items-center justify-center bg-surface z-10 pointer-events-none">
+              <LoadingView elapsed={elapsed} />
+            </div>
+          )}
+
           {/* Results Scroll Container */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-10 pt-4">
-            {!loading && !result && (
-              <div className="border border-dashed border-border rounded-2xl flex flex-col items-center justify-center min-h-[400px] text-text-muted mt-4">
-                <Target size={40} className="mb-4 opacity-50" />
-                <div className="text-sm font-medium">Awaiting Assessment</div>
-                <div className="text-xs text-text-subtle mt-1">Select a profile and run analysis.</div>
-              </div>
-            )}
-
-            {loading && (
-              <div className="border border-border rounded-2xl flex items-center justify-center min-h-[400px] bg-surface mt-4">
-                <LoadingView elapsed={elapsed} />
-              </div>
-            )}
-
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-10 pt-4 flex flex-col">
             {!loading && result && (
               <div className="flex flex-col md:flex-row gap-8 animate-fade-in-up items-start">
                 {/* Sticky Score Gauge on the left */}
@@ -456,13 +457,22 @@ export default function Dashboard() {
                       <div className="text-xl font-bold text-text">{result.borrower_name}</div>
                       <div className="text-xs text-text-muted mt-0.5 font-mono">ID: {result.assessment_id}</div>
                     </div>
-                    <button
-                      onClick={() => window.open(`http://localhost:8000/api/assessment/${result.assessment_id}/download`, '_blank')}
-                      className="flex shrink-0 items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-surface2 border border-border text-text hover:text-text hover:bg-surface hover:border-text-muted transition-all cursor-pointer group"
-                    >
-                      <Download size={14} className="group-hover:-translate-y-[1px] transition-transform text-text-muted group-hover:text-text" />
-                      Download PDF
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setResult(null)}
+                        className="flex shrink-0 items-center justify-center w-8 h-8 rounded-lg text-text-muted bg-surface2 border border-border hover:text-text hover:bg-surface hover:border-text-muted transition-all cursor-pointer group"
+                        title="Clear Results"
+                      >
+                        <RotateCcw size={14} className="group-hover:-rotate-180 transition-transform duration-500" />
+                      </button>
+                      <button
+                        onClick={() => window.open(`http://localhost:8000/api/assessment/${result.assessment_id}/download`, '_blank')}
+                        className="flex shrink-0 items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-surface2 border border-border text-text hover:text-text hover:bg-surface hover:border-text-muted transition-all cursor-pointer group"
+                      >
+                        <Download size={14} className="group-hover:-translate-y-[1px] transition-transform text-text-muted group-hover:text-text" />
+                        Download PDF
+                      </button>
+                    </div>
                   </div>
 
                   <div className="px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-3 bg-surface2 border border-border text-text">
@@ -633,16 +643,18 @@ export default function Dashboard() {
           {activeNav === "overview" && renderOverview()}
           {activeNav === "score" && renderScoreChecker()}
           {activeNav === "batch" && (
-            <div className="w-full h-full animate-fade-in-up">
-              <div className="mb-8">
+            <div className="w-full h-full animate-fade-in-up flex flex-col min-h-0 pr-2">
+              <div className="mb-6 shrink-0">
                 <h1 className="text-2xl font-bold text-text mb-1 tracking-tight">Batch Inference</h1>
                 <p className="text-sm text-text-muted">Upload a CSV containing user data to score thousands of profiles simultaneously.</p>
               </div>
-              <BulkPanel />
+              <div className="flex-1 min-h-0 flex flex-col">
+                <BulkPanel />
+              </div>
             </div>
           )}
           {activeNav === "users" && (
-            <div className="w-full h-full animate-fade-in-up">
+            <div className="w-full h-full animate-fade-in-up overflow-y-auto custom-scrollbar pr-4 pb-12">
               <div className="mb-8">
                 <h1 className="text-2xl font-bold text-text mb-1 tracking-tight">Users & Agents</h1>
                 <p className="text-sm text-text-muted">Manage system users and configure LLM agent parameters.</p>
@@ -653,7 +665,7 @@ export default function Dashboard() {
             </div>
           )}
           {activeNav === "settings" && (
-            <div className="w-full h-full animate-fade-in-up">
+            <div className="w-full h-full animate-fade-in-up overflow-y-auto custom-scrollbar pr-4 pb-12">
               <div className="mb-8">
                 <h1 className="text-2xl font-bold text-text mb-1 tracking-tight">Settings</h1>
                 <p className="text-sm text-text-muted">Configure application preferences and integrations.</p>

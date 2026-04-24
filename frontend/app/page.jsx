@@ -144,7 +144,71 @@ export default function LandingPage() {
              </div>
           </div>
         </div>
+
+
       </main>
+
+      {/* Agent Use Case Section */}
+      <section className="w-full max-w-6xl mx-auto px-6 mt-32 mb-32 z-10 opacity-0 animate-[fade-in-up_1s_ease-out_0.7s_forwards]">
+        <div className="relative border border-border/40 rounded-[32px] p-10 md:p-16 overflow-hidden bg-bg/40 backdrop-blur-md shadow-2xl">
+          {/* Inner Card Glow - Thematic smoke-like glow at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 h-[80%] bg-gradient-to-t from-indigo-500/20 via-indigo-500/5 to-transparent pointer-events-none"></div>
+          <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-3/4 h-80 bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none"></div>
+
+          <div className="relative z-10 flex flex-col items-center text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-text mb-6">Powered by specialized AI agents</h2>
+            <p className="text-text-muted max-w-2xl text-lg">
+              Our ensemble of context-aware LLM agents cross-references alternative data footprints to build a holistic credit profile for every borrower.
+            </p>
+          </div>
+
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+            {/* Agent 1 */}
+            <div className="relative bg-surface/90 backdrop-blur-xl border border-border/60 rounded-2xl p-8 transition-all hover:-translate-y-1 hover:border-indigo-500/50 hover:shadow-[0_8px_30px_rgb(99,102,241,0.12)] group overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative z-10">
+                <div className="text-2xl font-bold text-text mb-4 group-hover:text-primary transition-colors">UPI Data</div>
+                <p className="text-sm text-text-muted leading-relaxed">
+                  Evaluates digital transaction footprint, velocity, and consistency to determine cash-flow health.
+                </p>
+              </div>
+            </div>
+
+            {/* Agent 2 */}
+            <div className="relative bg-surface/90 backdrop-blur-xl border border-border/60 rounded-2xl p-8 transition-all hover:-translate-y-1 hover:border-indigo-500/50 hover:shadow-[0_8px_30px_rgb(99,102,241,0.12)] group overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative z-10">
+                <div className="text-2xl font-bold text-text mb-4 group-hover:text-primary transition-colors">Income</div>
+                <p className="text-sm text-text-muted leading-relaxed">
+                  Verifies stable income sources, employment tenure, and identifies high-risk gig employment volatility.
+                </p>
+              </div>
+            </div>
+
+            {/* Agent 3 */}
+            <div className="relative bg-surface/90 backdrop-blur-xl border border-border/60 rounded-2xl p-8 transition-all hover:-translate-y-1 hover:border-indigo-500/50 hover:shadow-[0_8px_30px_rgb(99,102,241,0.12)] group overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative z-10">
+                <div className="text-2xl font-bold text-text mb-4 group-hover:text-primary transition-colors">Behavioral</div>
+                <p className="text-sm text-text-muted leading-relaxed">
+                  Analyzes spending habits and financial discipline to catch hidden liabilities or risky saving ratios.
+                </p>
+              </div>
+            </div>
+
+            {/* Agent 4 */}
+            <div className="relative bg-surface/90 backdrop-blur-xl border border-border/60 rounded-2xl p-8 transition-all hover:-translate-y-1 hover:border-indigo-500/50 hover:shadow-[0_8px_30px_rgb(99,102,241,0.12)] group overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative z-10">
+                <div className="text-2xl font-bold text-text mb-4 group-hover:text-primary transition-colors">Rental</div>
+                <p className="text-sm text-text-muted leading-relaxed">
+                  Cross-references landlord records and utility payments to confirm location stability and on-time reliability.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
