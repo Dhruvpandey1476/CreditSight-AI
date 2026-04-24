@@ -400,14 +400,76 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Job Tenure (months)</label>
-              <input
-                className="form-input"
-                type="number"
-                value={profile.job_tenure_months}
-                onChange={(e) => update("job_tenure_months", +e.target.value)}
-              />
+            <div className="input-row">
+              <div className="form-group">
+                <label className="form-label">Job Tenure (mos)</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  value={profile.job_tenure_months}
+                  onChange={(e) => update("job_tenure_months", +e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Location Stability</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  value={profile.location_stability_score}
+                  onChange={(e) => update("location_stability_score", +e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="input-row">
+              <div className="form-group">
+                <label className="form-label">UPI Outflow (₹)</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  value={profile.upi_avg_monthly_outflow}
+                  onChange={(e) => update("upi_avg_monthly_outflow", +e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Merchant Diversity</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  value={profile.upi_merchant_diversity}
+                  onChange={(e) => update("upi_merchant_diversity", +e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="input-row">
+              <div className="form-group">
+                <label className="form-label">Utility On-Time Rate</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  value={profile.utility_on_time_rate}
+                  onChange={(e) => update("utility_on_time_rate", +e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">SIM Tenure (mos)</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  value={profile.sim_tenure_months}
+                  onChange={(e) => update("sim_tenure_months", +e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="form-group">
