@@ -6,7 +6,8 @@ __pycache__/
 .env
 
 # data
-data/
+backend/data/synthetic_borrowers.csv
+backend/data/synthetic_borrowers.csv.xls
 datasets/
 *.csv
 
