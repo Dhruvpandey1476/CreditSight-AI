@@ -10,6 +10,8 @@ export default function BulkPanel() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [dragover, setDragover] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
 
   const handleFileSelect = (file) => {
     if (file && file.name.endsWith(".csv")) {
@@ -57,6 +59,7 @@ export default function BulkPanel() {
         data,
         csvText,
       });
+      setCurrentPage(1);
     } catch (e) {
       setError(`Upload failed: ${e.message}`);
     } finally {
@@ -184,8 +187,9 @@ export default function BulkPanel() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar rounded-xl border border-border bg-surface pr-2">
-            <table className="w-full text-left border-collapse text-sm">
+          <div className="flex-1 flex flex-col rounded-xl border border-border bg-surface min-h-0">
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+              <table className="w-full text-left border-collapse text-sm">
               <thead className="bg-surface2 sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th className="p-4 text-text-muted font-semibold text-xs uppercase tracking-wide border-b border-border">Borrower Name</th>
@@ -195,9 +199,9 @@ export default function BulkPanel() {
                 </tr>
               </thead>
               <tbody>
-                {results.data.map((row, idx) => (
+                {results.data.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage).map((row, idx) => (
                   <tr key={idx} className="border-b border-border/50 hover:bg-surface2/50 transition-colors">
-                    <td className="p-4 text-text font-medium">{row.borrower_name || `Profile ${idx + 1}`}</td>
+                    <td className="p-4 text-text font-medium">{row.borrower_name || `Profile ${(currentPage - 1) * rowsPerPage + idx + 1}`}</td>
                     <td className="p-4 font-mono font-bold text-text">
                       {row.final_score || "-"}
                     </td>
@@ -213,6 +217,52 @@ export default function BulkPanel() {
                 ))}
               </tbody>
             </table>
+          </div>
+            
+          {/* Pagination Controls */}
+          {results.data.length > 0 && (
+            <div className="shrink-0 flex flex-col sm:flex-row justify-between items-center py-4 px-4 border-t border-border gap-4 bg-surface2/30 rounded-b-xl">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-text-muted">Rows per page:</span>
+                    <select
+                      className="bg-surface border border-border rounded-md text-sm text-text px-2 py-1 outline-none focus:border-text-muted cursor-pointer"
+                      value={rowsPerPage}
+                      onChange={(e) => {
+                        const newRowsPerPage = Number(e.target.value);
+                        setRowsPerPage(newRowsPerPage);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </div>
+                  <span className="text-sm text-text-muted hidden sm:inline-block">|</span>
+                  <span className="text-sm text-text-muted">
+                    Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, results.data.length)} of {results.data.length} profiles
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-lg border border-border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface hover:text-text text-text-muted transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.data.length / rowsPerPage), p + 1))}
+                    disabled={currentPage === Math.ceil(results.data.length / rowsPerPage)}
+                    className="px-4 py-2 rounded-lg border border-border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface hover:text-text text-text-muted transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
