@@ -208,10 +208,10 @@ export default function Dashboard() {
               <PieChart>
                 <Pie
                   data={[
-                    { name: "UPI Agent", val: 85, color: "#3b82f6" },
-                    { name: "Income Agent", val: 92, color: "#10b981" },
-                    { name: "Rental Agent", val: 78, color: "#f59e0b" },
-                    { name: "Behavioral Agent", val: 88, color: "#6366f1" },
+                    { name: "UPI Agent", val: 120, color: "#3b82f6" },
+                    { name: "Income Agent", val: 65, color: "#10b981" },
+                    { name: "Rental Agent", val: 35, color: "#f59e0b" },
+                    { name: "Behavioral Agent", val: 15, color: "#6366f1" },
                   ]}
                   cx="50%"
                   cy="50%"
@@ -236,20 +236,25 @@ export default function Dashboard() {
                   itemStyle={{ color: 'var(--color-text)', fontSize: '12px', fontWeight: '600' }}
                   labelStyle={{ display: 'none' }}
                 />
+                <text x="50%" y="45%" textAnchor="middle" dominantBaseline="middle" className="fill-text text-xl font-bold">235</text>
+                <text x="50%" y="58%" textAnchor="middle" dominantBaseline="middle" className="fill-text-muted text-[10px] font-medium tracking-wider uppercase">Signals</text>
               </PieChart>
             </ResponsiveContainer>
           </div>
           
-          <div className="grid grid-cols-2 gap-y-3 gap-x-2 mt-4 pt-4 border-t border-border">
+          <div className="grid grid-cols-2 gap-y-3 gap-x-6 mt-4 pt-4 border-t border-border">
              {[
-               { name: "UPI Agent", color: "#3b82f6" },
-               { name: "Income Agent", color: "#10b981" },
-               { name: "Rental Agent", color: "#f59e0b" },
-               { name: "Behavioral Agent", color: "#6366f1" },
+               { name: "UPI Agent", val: 120, color: "#3b82f6" },
+               { name: "Income Agent", val: 65, color: "#10b981" },
+               { name: "Rental Agent", val: 35, color: "#f59e0b" },
+               { name: "Behavioral Agent", val: 15, color: "#6366f1" },
              ].map((ag, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-text-muted hover:text-text transition-colors cursor-default">
-                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ag.color }}></div>
-                   <span className="truncate">{ag.name}</span>
+                <div key={i} className="flex items-center justify-between text-xs text-text-muted hover:text-text transition-colors cursor-default">
+                   <div className="flex items-center gap-2">
+                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ag.color }}></div>
+                     <span className="truncate">{ag.name}</span>
+                   </div>
+                   <span className="font-semibold text-text">{ag.val}</span>
                 </div>
              ))}
           </div>
@@ -631,8 +636,6 @@ export default function Dashboard() {
             { id: "overview", label: "Overview", icon: LayoutGrid },
             { id: "score", label: "Score Checker", icon: Target },
             { id: "batch", label: "Batch Inference", icon: Database },
-            { id: "users", label: "Users & Agents", icon: Users },
-            { id: "settings", label: "Settings", icon: Settings },
           ].map((item) => (
             <button
               key={item.id}

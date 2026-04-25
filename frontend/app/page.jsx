@@ -37,9 +37,7 @@ export default function LandingPage() {
         
         {/* Center Links */}
         <div className="hidden md:flex items-center justify-center gap-10 text-sm font-medium text-text-muted">
-          <span className="hover:text-text cursor-pointer transition-colors">Features</span>
-          <span className="hover:text-text cursor-pointer transition-colors">Pricing</span>
-          <span className="hover:text-text cursor-pointer transition-colors">Contact</span>
+          <Link href="/docs" className="hover:text-text cursor-pointer transition-colors">Docs</Link>
         </div>
 
         {/* Right Actions */}
@@ -109,12 +107,12 @@ export default function LandingPage() {
           {/* Mockup Sidebar */}
           <div className="w-64 border-r border-border p-6 hidden md:flex flex-col gap-8 bg-bg/50">
              <div className="text-xl font-bold tracking-tight">CreditSight</div>
-             <div className="flex flex-col gap-4 text-sm font-medium text-text-muted">
-                <div className="flex items-center gap-3 text-text bg-surface2 px-3 py-2 rounded-md"><LayoutDashboard size={18}/> Dashboard</div>
-                <div className="flex items-center gap-3 px-3 py-2"><Rocket size={18}/> Assessments</div>
-                <div className="flex items-center gap-3 px-3 py-2"><Activity size={18}/> Analytics</div>
-                <div className="flex items-center gap-3 px-3 py-2"><Users size={18}/> Team</div>
-                <div className="flex items-center gap-3 px-3 py-2"><Settings size={18}/> Settings</div>
+             <div className="flex flex-col gap-2 text-sm font-medium text-text-muted">
+                <div className="flex items-center gap-3 text-text bg-surface2 px-3 py-2 rounded-md transition-colors"><LayoutDashboard size={18}/> Dashboard</div>
+                <div className="flex items-center gap-3 px-3 py-2 hover:bg-surface hover:text-text hover:translate-x-1 cursor-pointer transition-all rounded-md"><Rocket size={18}/> Assessments</div>
+                <div className="flex items-center gap-3 px-3 py-2 hover:bg-surface hover:text-text hover:translate-x-1 cursor-pointer transition-all rounded-md"><Activity size={18}/> Analytics</div>
+                <div className="flex items-center gap-3 px-3 py-2 hover:bg-surface hover:text-text hover:translate-x-1 cursor-pointer transition-all rounded-md"><Users size={18}/> Team</div>
+                <div className="flex items-center gap-3 px-3 py-2 hover:bg-surface hover:text-text hover:translate-x-1 cursor-pointer transition-all rounded-md"><Settings size={18}/> Settings</div>
              </div>
           </div>
           {/* Mockup Main */}
@@ -123,17 +121,17 @@ export default function LandingPage() {
              <div className="h-20 border-b border-border flex items-center justify-between px-8 bg-surface/50">
                 <div className="font-bold text-lg">Assessments</div>
                 <div className="flex items-center gap-4">
-                   <div className="flex items-center gap-2 px-3 py-1.5 border border-border bg-bg rounded-md text-sm text-text-muted w-64">
-                      <Search size={14}/> Search borrowers...
+                   <div className="flex items-center gap-2 px-3 py-1.5 border border-border bg-bg rounded-md text-sm text-text-muted w-64 hover:border-text-muted focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all cursor-text group">
+                      <Search size={14} className="group-hover:text-text transition-colors"/> Search borrowers...
                    </div>
-                   <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-bg"><User size={14}/></div>
+                   <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-bg hover:bg-surface2 hover:text-text hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-sm"><User size={14}/></div>
                 </div>
              </div>
              {/* Mockup Content */}
              <div className="p-8 flex-1">
                 <div className="flex items-center justify-between mb-6">
                    <div className="font-bold text-base">Recent Assessments</div>
-                   <div className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-md">+ New Score</div>
+                   <div className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-md hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-md active:scale-95 transition-all cursor-pointer">+ New Score</div>
                 </div>
                 {/* Mockup Table */}
                 <div className="w-full bg-surface border border-border rounded-lg overflow-hidden">
@@ -148,11 +146,15 @@ export default function LandingPage() {
                      { name: "Priya Singh", date: "06/05/2024, 11:15:12", status: "Low Risk" },
                      { name: "Arjun Verma", date: "20/08/2024, 03:54:03", status: "Moderate" }
                    ].map((row, i) => (
-                     <div key={i} className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-border text-sm items-center">
-                        <div className="font-medium">{row.name}</div>
-                        <div><span className={`px-2.5 py-1 text-bg text-[10px] font-bold rounded-full uppercase tracking-wider ${row.status === 'High Risk' ? 'bg-rose-500' : row.status === 'Low Risk' ? 'bg-emerald-500' : 'bg-amber-500'}`}>{row.status}</span></div>
+                     <div key={i} className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-border text-sm items-center hover:bg-surface2/50 transition-colors cursor-pointer group">
+                        <div className="font-medium group-hover:text-primary transition-colors">{row.name}</div>
+                        <div><span className={`px-2.5 py-1 text-bg text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm ${row.status === 'High Risk' ? 'bg-rose-500' : row.status === 'Low Risk' ? 'bg-emerald-500' : 'bg-amber-500'}`}>{row.status}</span></div>
                         <div className="text-text-muted">{row.date}</div>
-                        <div className="text-right flex justify-end"><div className="w-1 h-4 border-l-2 border-dotted border-text-muted"></div></div>
+                        <div className="text-right flex justify-end">
+                           <div className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-border transition-colors">
+                              <div className="w-1 h-4 border-l-2 border-dotted border-text-muted group-hover:border-text transition-colors"></div>
+                           </div>
+                        </div>
                      </div>
                    ))}
                 </div>
@@ -224,6 +226,51 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Footer Section */}
+      <footer className="relative w-full border-t border-border bg-bg pt-16 pb-8 overflow-hidden z-20">
+        <div className="max-w-6xl mx-auto px-6 relative z-10 flex flex-col md:flex-row justify-between gap-12 mb-12">
+          
+          {/* Logo & Copyright */}
+          <div className="flex flex-col gap-4 max-w-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm tracking-tighter shadow-sm">
+                CS
+              </div>
+              <span className="font-bold text-lg tracking-tight">CreditSight</span>
+            </div>
+            <p className="text-sm text-text-muted mt-2">
+              © copyright CreditSight 2024. All rights reserved.
+            </p>
+          </div>
+
+          {/* Links Columns */}
+          <div className="flex gap-16 md:gap-32 text-sm">
+            <div className="flex flex-col gap-4">
+              <h4 className="font-bold text-text">Team</h4>
+              <span className="text-text-muted">Anjishnu</span>
+              <span className="text-text-muted">Dhruv</span>
+              <span className="text-text-muted">Nikhil</span>
+              <span className="text-text-muted">Harshit</span>
+            </div>
+            <div className="flex flex-col gap-4">
+              <h4 className="font-bold text-text">App</h4>
+              <Link href="/register" className="text-text-muted hover:text-primary transition-colors">Sign Up</Link>
+              <Link href="/login" className="text-text-muted hover:text-primary transition-colors">Login</Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Faded Background Text */}
+        <div className="relative w-full overflow-hidden flex justify-center pointer-events-none select-none z-0 -mt-8">
+          <h1 
+            className="text-[12vw] font-black text-text tracking-tighter leading-none opacity-5 dark:opacity-10"
+            style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)', maskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)' }}
+          >
+            CreditSight
+          </h1>
+        </div>
+      </footer>
     </div>
   );
 }
