@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Moon, Sun, Search, User, LayoutDashboard, Rocket, Activity, Users, Settings, ArrowRight } from "lucide-react";
+import { Moon, Sun, Search, User, LayoutDashboard, Rocket, Activity, Users, Settings, ArrowRight, Menu, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
 
   useEffect(() => {
@@ -28,20 +29,28 @@ export default function LandingPage() {
       {/* Navbar */}
       <nav className="flex items-center justify-between px-6 md:px-12 py-6 relative z-50 animate-fade-in">
         {/* Logo Left */}
-        <div className="flex items-center gap-3 cursor-pointer lg:w-64 w-auto">
+        <div className="flex items-center gap-3 cursor-pointer lg:w-64 w-auto z-50">
           <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm tracking-tighter shadow-sm">
             CS
           </div>
           <span className="font-bold text-lg tracking-tight">CreditSight</span>
         </div>
         
-        {/* Center Links */}
+        {/* Mobile Menu Toggle */}
+        <button 
+          className="md:hidden flex items-center justify-center text-text z-50 p-2"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        
+        {/* Center Links (Desktop) */}
         <div className="hidden md:flex items-center justify-center gap-10 text-sm font-medium text-text-muted">
           <Link href="/docs" className="hover:text-text cursor-pointer transition-colors">Docs</Link>
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center justify-end gap-4 md:gap-6 lg:w-64 w-auto">
+        {/* Right Actions (Desktop) */}
+        <div className="hidden md:flex items-center justify-end gap-4 md:gap-6 lg:w-64 w-auto">
           {mounted && (
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -70,6 +79,38 @@ export default function LandingPage() {
             <div className="w-24"></div>
           )}
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        {isMobileMenuOpen && (
+          <div className="absolute top-0 left-0 w-full bg-bg border-b border-border z-40 px-6 pt-24 pb-8 flex flex-col gap-6 shadow-xl animate-fade-in md:hidden">
+            <Link href="/docs" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-bold text-text hover:text-primary transition-colors">Docs</Link>
+            <div className="h-px bg-border w-full"></div>
+            {mounted && (
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-text">Theme</span>
+                <button
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="bg-surface border border-border p-2 rounded-md text-text"
+                >
+                   {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+                </button>
+              </div>
+            )}
+            <div className="flex flex-col gap-3 mt-4">
+              {mounted && user ? (
+                <>
+                  <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="w-full text-center bg-primary text-primary-foreground px-4 py-3 rounded-lg text-sm font-bold transition-all shadow-md">Dashboard</Link>
+                  <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="w-full text-center border border-border text-text px-4 py-3 rounded-lg text-sm font-bold transition-all">Logout</button>
+                </>
+              ) : (
+                <>
+                  <Link href="/register" onClick={() => setIsMobileMenuOpen(false)} className="w-full text-center bg-primary text-primary-foreground px-4 py-3 rounded-lg text-sm font-bold transition-all shadow-md">Start Free Trial</Link>
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full text-center border border-border text-text px-4 py-3 rounded-lg text-sm font-bold transition-all">Login</Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -103,7 +144,7 @@ export default function LandingPage() {
         </div>
 
         {/* Dashboard Mockup Peek */}
-        <div className="opacity-0 animate-[fade-in-up_0.8s_ease-out_0.5s_forwards] mt-24 w-full max-w-5xl mx-auto bg-surface border-t border-x border-border rounded-t-2xl shadow-2xl flex flex-col md:flex-row text-left overflow-hidden h-[400px]">
+        <div className="opacity-0 animate-[fade-in-up_0.8s_ease-out_0.5s_forwards] mt-24 w-full max-w-5xl mx-auto bg-surface border-t border-x border-border rounded-t-2xl shadow-2xl flex flex-col md:flex-row text-left overflow-x-hidden overflow-y-hidden h-[400px] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-shadow duration-500">
           {/* Mockup Sidebar */}
           <div className="w-64 border-r border-border p-6 hidden md:flex flex-col gap-8 bg-bg/50">
              <div className="text-xl font-bold tracking-tight">CreditSight</div>

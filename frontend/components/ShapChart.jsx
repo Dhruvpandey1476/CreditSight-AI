@@ -59,7 +59,7 @@ export default function ShapChart({ shapValues }) {
       <div className="text-sm text-text-muted mb-6">
         How each signal influenced the final score
       </div>
-      <div className="w-full h-[260px] -ml-2">
+      <div className="w-full h-[260px] -ml-2 min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ left: 10, right: 20 }}>
             <CartesianGrid

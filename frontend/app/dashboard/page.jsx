@@ -152,7 +152,7 @@ export default function Dashboard() {
     ];
 
     return (
-      <div className="flex flex-col gap-6 w-full h-full animate-fade-in-up">
+      <div className="flex flex-col gap-6 w-full h-full animate-fade-in-up overflow-y-auto custom-scrollbar pr-2 pb-12">
         <div className="flex justify-between items-end">
           <div>
             <h1 className="text-2xl font-bold text-text mb-1">Overview</h1>
@@ -183,7 +183,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-2">
-          <div className="lg:col-span-2 p-6 rounded-2xl bg-surface border border-border min-h-[300px] flex flex-col hover:shadow-sm transition-shadow">
+          <div className="lg:col-span-2 p-6 rounded-2xl bg-surface border border-border min-h-[300px] flex flex-col hover:shadow-sm transition-shadow min-w-0">
             <div className="text-sm font-semibold text-text mb-6">Risk Distribution</div>
             <div className="flex-1 min-h-[200px] -ml-4">
               <ResponsiveContainer width="100%" height="100%">
@@ -201,7 +201,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
           </div>
-        <div className="p-6 rounded-2xl bg-surface border border-border flex flex-col hover:shadow-sm transition-shadow">
+        <div className="p-6 rounded-2xl bg-surface border border-border flex flex-col hover:shadow-sm transition-shadow min-w-0">
           <div className="text-sm font-semibold text-text mb-6">Agent Activity</div>
           <div className="flex-1 min-h-[200px] flex flex-col justify-center relative -mt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -265,15 +265,15 @@ export default function Dashboard() {
   };
 
   const renderScoreChecker = () => (
-    <div className="flex flex-col gap-6 h-full w-full animate-fade-in-up">
+    <div className="flex flex-col gap-6 h-full w-full animate-fade-in-up overflow-y-auto lg:overflow-hidden custom-scrollbar pr-2 pb-12 lg:pb-0">
       <div className="shrink-0">
         <h1 className="text-2xl font-bold text-text mb-1">Score Checker</h1>
         <p className="text-sm text-text-muted">Run individual credit assessments on prospective borrowers.</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row gap-8 flex-1 lg:min-h-0 pb-12 lg:pb-0">
         {/* Form Column Wrapper */}
-        <div className="w-full lg:w-[380px] shrink-0 bg-surface border border-border rounded-2xl shadow-sm h-full flex flex-col overflow-hidden">
+        <div className="w-full lg:w-[380px] shrink-0 bg-surface border border-border rounded-2xl shadow-sm lg:h-full flex flex-col lg:overflow-hidden">
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-6">
             <div className="p-6 pb-0">
             <div className="text-xs font-semibold tracking-wider text-text-muted uppercase mb-4">Demo Profiles</div>
@@ -472,7 +472,7 @@ export default function Dashboard() {
         </div>
 
         {/* Results Column Wrapper */}
-        <div className="flex-1 relative flex flex-col h-full min-h-0">
+        <div className="flex-1 relative flex flex-col lg:h-full min-h-0">
           {/* Scroll Masks */}
           <div className="absolute top-0 left-0 right-2 h-4 bg-gradient-to-b from-bg to-transparent z-20 pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 right-2 h-6 bg-gradient-to-t from-bg to-transparent z-20 pointer-events-none"></div>
@@ -609,7 +609,7 @@ export default function Dashboard() {
       )}
 
       {/* Sidebar Navigation */}
-      <aside className={`fixed lg:relative top-0 z-50 bg-bg border-r border-border flex flex-col shrink-0 h-screen transition-all duration-300 shadow-xl lg:shadow-none ${isSidebarOpen ? 'translate-x-0 w-[240px]' : '-translate-x-full w-[240px] lg:translate-x-0 lg:w-[68px]'} relative`}>
+      <aside className={`fixed lg:relative top-0 left-0 z-50 bg-bg border-r border-border flex flex-col shrink-0 h-screen transition-all duration-300 shadow-xl lg:shadow-none ${isSidebarOpen ? 'translate-x-0 w-[240px]' : '-translate-x-full w-[240px] lg:translate-x-0 lg:w-[68px]'}`}>
         {/* Border Toggler */}
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
