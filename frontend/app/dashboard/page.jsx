@@ -16,7 +16,7 @@ import ShapChart from "../../components/ShapChart";
 import LoadingView from "../../components/LoadingView";
 import HistoryPanel from "../../components/HistoryPanel";
 import BulkPanel from "../../components/BulkPanel";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 const TIER_CONFIG = {
   A: { color: "var(--color-primary)", bg: "var(--color-primary-light)", label: "Excellent", desc: "Approve — low risk" },
@@ -62,6 +62,7 @@ export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [demoProfiles, setDemoProfiles] = useState([]);
+  const [historyData, setHistoryData] = useState([]);
   const [activeDemo, setActiveDemo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -80,6 +81,18 @@ export default function Dashboard() {
       .then((r) => r.json())
       .then(setDemoProfiles)
       .catch(() => {});
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch("/api/history?limit=1000", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setHistoryData(data);
+      })
+      .catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
@@ -125,44 +138,69 @@ export default function Dashboard() {
   const tier = result?.credit_tier;
   const cfg = tier ? TIER_CONFIG[tier] : null;
 
-  const renderOverview = () => (
-    <div className="flex flex-col gap-6 w-full h-full animate-fade-in-up">
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-2xl font-bold text-text mb-1">Overview</h1>
-          <p className="text-sm text-text-muted">Monitor your overall credit risk metrics and system health.</p>
-        </div>
-      </div>
+  const renderOverview = () => {
+    const totalUsers = historyData.length;
+    const highRiskFlags = historyData.filter(d => ['C', 'D'].includes(d.credit_tier)).length;
+    const avgScore = totalUsers > 0 ? Math.round(historyData.reduce((acc, curr) => acc + curr.final_score, 0) / totalUsers) : 0;
+    const approvalRate = totalUsers > 0 ? Math.round((historyData.filter(d => ['A', 'B'].includes(d.credit_tier)).length / totalUsers) * 100) : 0;
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
-        {[
-          { label: "Total Users Scored", value: "1.4M", trend: "+12.5%", icon: Users, colorClass: "text-blue-500", bgClass: "bg-blue-500/10", borderClass: "border-blue-500/20", trendClass: "text-emerald-500" },
-          { label: "High Risk Flags", value: "142k", trend: "-2.1%", icon: AlertTriangle, colorClass: "text-rose-500", bgClass: "bg-rose-500/10", borderClass: "border-rose-500/20", trendClass: "text-rose-500" },
-          { label: "Avg. Credit Score", value: "620", trend: "+15", icon: Zap, colorClass: "text-amber-500", bgClass: "bg-amber-500/10", borderClass: "border-amber-500/20", trendClass: "text-emerald-500" },
-          { label: "System Accuracy", value: "98.4%", trend: "+0.2%", icon: CheckCircle2, colorClass: "text-emerald-500", bgClass: "bg-emerald-500/10", borderClass: "border-emerald-500/20", trendClass: "text-emerald-500" },
-        ].map((stat, i) => (
-          <div key={i} className="p-5 rounded-2xl bg-surface border border-border flex flex-col gap-4 relative hover:-translate-y-1 hover:shadow-md transition-all cursor-default" style={{ animationDelay: `${i * 100}ms` }}>
-            <div className="flex justify-between items-start">
-              <div className={`p-2 rounded-lg border ${stat.bgClass} ${stat.borderClass}`}>
-                <stat.icon size={16} className={stat.colorClass} />
+    const chartData = [
+      { name: 'Tier A (Excellent)', count: historyData.filter(d => d.credit_tier === 'A').length, fill: 'var(--color-primary)' },
+      { name: 'Tier B (Good)', count: historyData.filter(d => d.credit_tier === 'B').length, fill: '#4ECDC4' },
+      { name: 'Tier C (Fair)', count: historyData.filter(d => d.credit_tier === 'C').length, fill: '#FFB347' },
+      { name: 'Tier D (Poor)', count: historyData.filter(d => d.credit_tier === 'D').length, fill: '#FF6B6B' },
+    ];
+
+    return (
+      <div className="flex flex-col gap-6 w-full h-full animate-fade-in-up">
+        <div className="flex justify-between items-end">
+          <div>
+            <h1 className="text-2xl font-bold text-text mb-1">Overview</h1>
+            <p className="text-sm text-text-muted">Monitor your overall credit risk metrics and system health.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
+          {[
+            { label: "Total Profiles Analyzed", value: totalUsers.toString(), trend: "Live", icon: Users, colorClass: "text-blue-500", bgClass: "bg-blue-500/10", borderClass: "border-blue-500/20", trendClass: "text-blue-500" },
+            { label: "High Risk Flags", value: highRiskFlags.toString(), trend: "Live", icon: AlertTriangle, colorClass: "text-rose-500", bgClass: "bg-rose-500/10", borderClass: "border-rose-500/20", trendClass: "text-rose-500" },
+            { label: "Avg. Credit Score", value: avgScore.toString(), trend: "Live", icon: Zap, colorClass: "text-amber-500", bgClass: "bg-amber-500/10", borderClass: "border-amber-500/20", trendClass: "text-amber-500" },
+            { label: "Approval Rate", value: `${approvalRate}%`, trend: "Live", icon: CheckCircle2, colorClass: "text-emerald-500", bgClass: "bg-emerald-500/10", borderClass: "border-emerald-500/20", trendClass: "text-emerald-500" },
+          ].map((stat, i) => (
+            <div key={i} className="p-5 rounded-2xl bg-surface border border-border flex flex-col gap-4 relative hover:-translate-y-1 hover:shadow-md transition-all cursor-default" style={{ animationDelay: `${i * 100}ms` }}>
+              <div className="flex justify-between items-start">
+                <div className={`p-2 rounded-lg border ${stat.bgClass} ${stat.borderClass}`}>
+                  <stat.icon size={16} className={stat.colorClass} />
+                </div>
+                <span className={`text-xs font-medium ${stat.trendClass}`}>{stat.trend}</span>
               </div>
-              <span className={`text-xs font-medium ${stat.trendClass}`}>{stat.trend}</span>
+              <div>
+                <div className="text-xs font-medium text-text-muted mb-1">{stat.label}</div>
+                <div className="text-2xl font-bold text-text tracking-tight">{stat.value}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-xs font-medium text-text-muted mb-1">{stat.label}</div>
-              <div className="text-2xl font-bold text-text tracking-tight">{stat.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-2">
-        <div className="lg:col-span-2 p-6 rounded-2xl bg-surface border border-border min-h-[300px] flex flex-col hover:shadow-sm transition-shadow">
-          <div className="text-sm font-semibold text-text mb-6">Risk Distribution</div>
-          <div className="flex-1 border border-dashed border-border rounded-lg flex items-center justify-center text-xs text-text-subtle bg-gradient-to-br from-blue-500/5 to-purple-500/5">
-            [ Chart Area - Risk Tiers 1-5 over time ]
-          </div>
+          ))}
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-2">
+          <div className="lg:col-span-2 p-6 rounded-2xl bg-surface border border-border min-h-[300px] flex flex-col hover:shadow-sm transition-shadow">
+            <div className="text-sm font-semibold text-text mb-6">Risk Distribution</div>
+            <div className="flex-1 min-h-[200px] -ml-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} />
+                  <RechartsTooltip 
+                    cursor={{ fill: 'var(--color-surface2)' }}
+                    contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '8px' }}
+                    itemStyle={{ color: 'var(--color-text)' }}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         <div className="p-6 rounded-2xl bg-surface border border-border flex flex-col hover:shadow-sm transition-shadow">
           <div className="text-sm font-semibold text-text mb-6">Agent Activity</div>
           <div className="flex-1 min-h-[200px] flex flex-col justify-center relative -mt-4">
@@ -218,7 +256,8 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderScoreChecker = () => (
     <div className="flex flex-col gap-6 h-full w-full animate-fade-in-up">

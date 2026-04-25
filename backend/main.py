@@ -153,14 +153,21 @@ async def register(user: UserCreate):
 
 @app.post("/api/auth/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute("SELECT password_hash, username FROM users WHERE username = ? OR email = ?", (form_data.username, form_data.username)) as cursor:
-            row = await cursor.fetchone()
-            if not row or not verify_password(form_data.password, row[0]):
-                raise HTTPException(status_code=400, detail="Incorrect username or password")
-    
-    access_token = create_access_token(data={"sub": row[1]})
-    return {"access_token": access_token, "token_type": "bearer"}
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            async with db.execute("SELECT password_hash, username FROM users WHERE username = ? OR email = ?", (form_data.username, form_data.username)) as cursor:
+                row = await cursor.fetchone()
+                if not row or not verify_password(form_data.password, row[0]):
+                    raise HTTPException(status_code=400, detail="Incorrect username or password")
+        
+        access_token = create_access_token(data={"sub": row[1]})
+        return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        raise HTTPException(status_code=400, detail=f"Error: {str(e)}\n{error_trace}")
 
 @app.get("/api/auth/me")
 async def read_users_me(current_user: dict = Depends(get_current_user)):

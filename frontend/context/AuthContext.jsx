@@ -52,7 +52,13 @@ export function AuthProvider({ children }) {
     });
 
     if (!res.ok) {
-      const errorData = await res.json();
+      let errorData;
+      const text = await res.text();
+      try {
+        errorData = JSON.parse(text);
+      } catch (e) {
+        errorData = { detail: text || `Server error (${res.status})` };
+      }
       throw new Error(errorData.detail || "Login failed");
     }
 
