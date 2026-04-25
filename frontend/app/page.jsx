@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Moon, Sun, Search, User, LayoutDashboard, Rocket, Activity, Users, Settings } from "lucide-react";
+import { Moon, Sun, Search, User, LayoutDashboard, Rocket, Activity, Users, Settings, ArrowRight } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -91,9 +91,9 @@ export default function LandingPage() {
           <Link href={user ? "/dashboard" : "/register"} className="px-6 py-3 rounded-lg bg-primary text-primary-foreground font-bold hover:scale-[1.02] active:scale-95 shadow-md transition-all w-full sm:w-auto min-w-[160px] text-center">
             {user ? "Go to Dashboard" : "Create account"}
           </Link>
-          <button className="px-6 py-3 rounded-lg bg-surface text-text font-bold hover:bg-surface2 hover:scale-[1.02] active:scale-95 transition-all border border-border shadow-sm w-full sm:w-auto min-w-[160px]">
-            Book a call
-          </button>
+          <Link href={user ? "/dashboard" : "/login"} className="px-6 py-3 rounded-lg bg-surface text-text font-bold hover:bg-surface2 hover:scale-[1.02] active:scale-95 transition-all border border-border shadow-sm w-full sm:w-auto min-w-[160px] flex items-center justify-center gap-2">
+            Explore <ArrowRight size={16} />
+          </Link>
 
           {/* Spark Particles */}
           <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-20 h-20 pointer-events-none">
